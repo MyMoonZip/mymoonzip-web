@@ -90,17 +90,33 @@ Input
 
 ---
 
-## 3. SHELL 기반 검증 구조
+## 3. TypeScript 중심 검증 구조
 
-각 SHELL은 독립적으로 실행되며 실패 시 해당 SHELL만 재시도한다.
+각 SHELL은 `executor.ts` 안에서 TypeScript로 정의되며, 실패 시 해당 SHELL만 재시도한다.
+SHELL 1~3은 `spawnSync`로 명령 실행, SHELL 4는 `policy.ts`의 `scanViolations()` 인라인 호출.
 
-| SHELL | 이름 | 명령 | 성공 기준 |
+| SHELL | 이름 | 방식 | 성공 기준 |
 |-------|------|------|-----------|
-| 1 | 프로젝트 구조 검증 | `find ./src -type f` | src/app/ 필수 파일 존재 |
+| 1 | 프로젝트 구조 검증 | `find ./src -type f \| sort` | layout.tsx, page.tsx 존재 |
 | 2 | 타입/린트 검사 | `npx tsc --noEmit && npx eslint` | 오류 0개 |
 | 3 | 테스트 실행 | `npx jest --passWithNoTests` | 실패 0개 |
-| 4 | 정책 검증 | `ts-node scripts/harness/policy.ts` | 허용 경로 위반 없음 |
-| 5 | 결과 요약 | `ts-node scripts/harness/executor.ts --summary` | 전체 SHELL 통과 |
+| 4 | 정책 검증 | inline `scanViolations()` | 허용 경로 위반 없음 |
+| 5 | 결과 요약 | inline 집계 | 전체 SHELL 통과 |
+
+### 실행 방법
+
+```bash
+# 전체 파이프라인
+npx tsx scripts/harness/executor.ts
+
+# 실패 SHELL만 재실행
+npx tsx scripts/harness/executor.ts --retry 2 4
+
+# API 경유 실행
+curl -X POST http://localhost:3000/api/harness
+```
+
+> 참고: `scripts/harness/*.sh` 는 CI/수동 검증용으로 유지되나 executor 파이프라인에서는 호출하지 않는다.
 
 ---
 
