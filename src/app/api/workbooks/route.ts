@@ -3,10 +3,10 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 
 // GET /api/workbooks?q=&tag=
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseAdmin();
   const { searchParams } = req.nextUrl;
   const q = searchParams.get("q") ?? "";
   const tag = searchParams.get("tag") ?? "";
-  const supabase = getSupabaseAdmin();
 
   let query = supabase
     .from("workbooks")
@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/workbooks
 export async function POST(req: NextRequest) {
+  const supabase = getSupabaseAdmin();
   const body = await req.json();
   const { title, tags, questions } = body as {
     title: string;
@@ -44,7 +45,6 @@ export async function POST(req: NextRequest) {
       order_index: number;
     }[];
   };
-  const supabase = getSupabaseAdmin();
 
   if (!title || !questions || questions.length === 0) {
     return NextResponse.json(
