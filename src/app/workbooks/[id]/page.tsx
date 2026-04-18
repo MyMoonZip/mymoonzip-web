@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import type { WorkbookDetail } from "@/lib/types";
 import QuizClient from "./quiz-client";
 
@@ -9,6 +9,7 @@ interface Props {
 
 export default async function WorkbookPage({ params }: Props) {
   const { id } = await params;
+  const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
     .from("workbooks")
