@@ -23,12 +23,6 @@ export default function Home() {
         >
           문제집 편집
         </Link>
-        <Link
-          href="/login"
-          className="flex h-12 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          로그인
-        </Link>
       </div>
     </main>
   );

@@ -44,12 +44,6 @@ export default function RootLayout({
               <Link href="/manage" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                 문제집 편집
               </Link>
-              <Link
-                href="/login"
-                className="rounded-full border border-zinc-300 dark:border-zinc-700 px-4 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                로그인
-              </Link>
             </div>
           </nav>
         </header>
