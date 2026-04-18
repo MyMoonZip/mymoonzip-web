@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import type { GradeSummary } from "@/lib/grader";
 
 export default function ResultPage() {
@@ -13,10 +13,10 @@ export default function ResultPage() {
   useEffect(() => {
     const raw = sessionStorage.getItem(`result-${id}`);
     if (!raw) {
-      router.replace(`/workbooks/${id}`);
+      startTransition(() => router.replace(`/workbooks/${id}`));
       return;
     }
-    setSummary(JSON.parse(raw));
+    startTransition(() => setSummary(JSON.parse(raw)));
   }, [id, router]);
 
   if (!summary) return null;

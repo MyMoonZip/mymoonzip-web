@@ -9,19 +9,17 @@ const ALL_TAGS = ["JavaScript", "프로그래밍", "HTML", "CSS", "웹"];
 export default function WorkbooksPage() {
   const [query, setQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // null = 최초 로딩 중, [] 이상 = 응답 완료
+  const [workbooks, setWorkbooks] = useState<WorkbookListItem[] | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (selectedTag) params.set("tag", selectedTag);
 
-    setLoading(true);
     fetch(`/api/workbooks?${params.toString()}`)
       .then((r) => r.json())
-      .then((data) => setWorkbooks(Array.isArray(data) ? data : []))
-      .finally(() => setLoading(false));
+      .then((data) => setWorkbooks(Array.isArray(data) ? data : []));
   }, [query, selectedTag]);
 
   return (
@@ -65,7 +63,7 @@ export default function WorkbooksPage() {
       </div>
 
       {/* 목록 */}
-      {loading ? (
+      {workbooks === null ? (
         <p className="text-sm text-zinc-400">불러오는 중...</p>
       ) : workbooks.length === 0 ? (
         <p className="text-sm text-zinc-500">검색 결과가 없습니다.</p>

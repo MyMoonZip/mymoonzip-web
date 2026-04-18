@@ -60,3 +60,39 @@
 | 5 | (inline) 요약 | PASS | ALL PASS |
 
 **다음 액션:** 완료. 이후 변경 시 executor 재실행.
+
+---
+
+## 2026-04-18 — 퀴즈 서비스 1~4단계 구축
+
+**작업 목표:** Next.js 퀴즈 서비스 뼈대 + Supabase API 연결
+
+**수정/신규 파일:**
+- src/app/layout.tsx (공통 nav 추가)
+- src/app/page.tsx (홈 화면, 버튼 3개)
+- src/app/harness/page.tsx (하네스 대시보드 /harness로 이동)
+- src/app/workbooks/page.tsx (문제집 목록, 검색+태그 필터)
+- src/app/workbooks/[id]/page.tsx (문제 풀이 서버 컴포넌트)
+- src/app/workbooks/[id]/quiz-client.tsx (문제 풀이 클라이언트)
+- src/app/workbooks/[id]/result/page.tsx (결과 화면, sessionStorage)
+- src/app/api/workbooks/route.ts (GET 목록+검색, POST 생성)
+- src/app/api/workbooks/[id]/route.ts (GET, PUT, DELETE)
+- src/app/api/workbooks/[id]/submit/route.ts (POST 채점)
+- src/lib/mock.ts (mock 데이터)
+- src/lib/types.ts (공유 타입)
+- src/lib/supabase.ts (Supabase 클라이언트)
+- src/lib/grader.ts (채점 순수 함수)
+- .gitignore (.agents 추가)
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | layout.tsx, page.tsx 포함 구조 정상 |
+| 2 | FAIL → PASS | workbooks/page.tsx setLoading 동기 setState → null 초기값으로 수정, result/page.tsx startTransition 적용 |
+| 3 | PASS | passWithNoTests |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** SHELL 2 — react-hooks/set-state-in-effect 위반 1건 (수정 완료)
+
+**다음 액션:** 5단계 문제집 관리(/manage) 구현.
