@@ -121,3 +121,31 @@
 **실패 여부:** 없음 (최초 실행 ALL PASS)
 
 **다음 액션:** grader.ts 단위 테스트 추가 (SHELL 3 실질 검증).
+
+---
+
+## 2026-04-18 — grader.ts 단위 테스트 추가
+
+**작업 목표:** SHELL 3 실질 검증 — jest + ts-jest 설치 및 테스트 작성
+
+**신규/수정 파일:**
+- jest.config.js (신규 — jest.config.ts → ts-node 불필요한 .js로 교체)
+- tests/grader.test.ts (신규 — 8개 케이스)
+
+**테스트 케이스:**
+- 전체 정답 / 전체 오답 / 절반 정답
+- 대소문자 무관 / 앞뒤 공백 무관
+- 빈 배열 / 미응답 빈 문자열 / score 반올림
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 |
+| 2 | PASS | 타입/린트 오류 없음 |
+| 3 | PASS | 8 tests passed |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** jest.config.ts → ts-node 오류 → jest.config.js로 교체 후 통과
+
+**다음 액션:** MVP 완성. Supabase 테이블 생성 후 실제 동작 확인.
