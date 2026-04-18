@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -8,6 +8,7 @@ interface Params {
 // GET /api/workbooks/[id]
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
+  const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
     .from("workbooks")
@@ -26,6 +27,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // PUT /api/workbooks/[id]
 export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params;
+  const supabase = getSupabaseAdmin();
   const body = await req.json();
   const { title, tags, questions } = body as {
     title?: string;
@@ -74,6 +76,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 // DELETE /api/workbooks/[id]
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id } = await params;
+  const supabase = getSupabaseAdmin();
 
   const { error } = await supabase.from("workbooks").delete().eq("id", id);
 

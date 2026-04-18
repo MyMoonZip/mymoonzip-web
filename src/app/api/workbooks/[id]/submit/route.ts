@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { grade } from "@/lib/grader";
 
 interface Params {
@@ -10,6 +10,7 @@ interface Params {
 // body: { answers: { questionId: string; userAnswer: string }[] }
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params;
+  const supabase = getSupabaseAdmin();
   const body = await req.json();
   const userAnswers: { questionId: string; userAnswer: string }[] =
     body.answers ?? [];

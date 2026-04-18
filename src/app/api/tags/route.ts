@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 // GET /api/tags — DB에 저장된 모든 태그 목록 (중복 제거, 정렬)
 export async function GET() {
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from("workbooks").select("tags");
 
   if (error) {
