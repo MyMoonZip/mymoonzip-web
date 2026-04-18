@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 // GET /api/workbooks?q=&tag=
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const q = searchParams.get("q") ?? "";
   const tag = searchParams.get("tag") ?? "";
+  const supabase = getSupabaseAdmin();
 
   let query = supabase
     .from("workbooks")
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
       order_index: number;
     }[];
   };
+  const supabase = getSupabaseAdmin();
 
   if (!title || !questions || questions.length === 0) {
     return NextResponse.json(
