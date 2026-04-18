@@ -254,3 +254,71 @@
 **실패 여부:** SHELL 2 — @typescript-eslint/no-unused-vars (warningFields 함수 정의만 하고 미사용) → 제거 후 통과
 
 **다음 액션:** `SUPABASE_SERVICE_ROLE_KEY` 설정 후 `npm run test:integration` 실행 확인.
+
+---
+
+## 2026-04-18 — 태그 N:M 정규화 구조 전환
+
+**작업 목표:** `workbooks.tags text[]` 방식에서 `tags` + `workbook_tags` N:M 구조로 전환. 정규화 정책 수립.
+
+**신규/수정 파일:**
+- src/lib/tags.ts (신규 — normalizeTags, replaceWorkbookTags, extractTagNames)
+- src/app/api/workbooks/route.ts (GET 태그 필터 N:M 방식, POST 태그 저장 N:M)
+- src/app/api/workbooks/[id]/route.ts (GET 태그 포함 응답, PUT 태그 교체)
+- src/app/api/tags/route.ts (tags 테이블 직접 조회)
+- src/app/manage/[id]/page.tsx (workbook_tags 포함 select, 태그 매핑)
+
+**정책 결정:**
+- 대소문자: 구분 (입력 그대로 저장, "JavaScript" ≠ "javascript")
+- trim + 내부 공백 정리 (연속 공백 → 단일 공백)
+- 빈 값 / 50자 초과 제거
+- 중복 제거 (입력 순서 유지, Set 기반)
+- 태그 개수 제한: MVP 단계에서 없음 (추후 추가 가능)
+- 미사용 tags 마스터 레코드: 정리하지 않음 (자동완성/통계 활용 가능)
+
+**Supabase 마이그레이션 SQL (사용자가 직접 실행 필요):**
+```sql
+-- 1. tags 마스터 테이블
+create table if not exists tags (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  created_at timestamptz default now()
+);
+
+-- 2. workbook_tags 연결 테이블
+create table if not exists workbook_tags (
+  workbook_id uuid not null references workbooks(id) on delete cascade,
+  tag_id      uuid not null references tags(id)      on delete cascade,
+  primary key (workbook_id, tag_id)
+);
+
+-- 3. 기존 text[] 데이터 마이그레이션 (컬럼이 있을 때만 실행)
+insert into tags (name)
+select distinct trim(tag)
+from workbooks, unnest(tags) as tag
+where trim(tag) <> ''
+on conflict (name) do nothing;
+
+insert into workbook_tags (workbook_id, tag_id)
+select w.id, t.id
+from workbooks w, unnest(w.tags) as tag_name
+join tags t on t.name = trim(tag_name)
+where trim(tag_name) <> ''
+on conflict do nothing;
+
+-- 4. 구 컬럼 제거
+alter table workbooks drop column if exists tags;
+```
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 (tags.ts 추가) |
+| 2 | FAIL → PASS | Supabase 타입 단언 불일치 → unknown[] + any 캐스트로 해결 |
+| 3 | PASS | 52 tests passed |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** SHELL 2 — `extractTagNames` 파라미터 타입과 Supabase 추론 타입 불일치 → `unknown[]` 수용으로 해결
+
+**다음 액션:** Supabase 대시보드에서 위 SQL 실행 후 실제 동작 확인.

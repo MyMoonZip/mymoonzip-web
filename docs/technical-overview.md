@@ -192,22 +192,47 @@ scripts/harness/
 
 ```sql
 create table workbooks (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  tags text[] default '{}',
+  id         uuid primary key default gen_random_uuid(),
+  title      text not null,
   created_at timestamptz default now()
 );
 
 create table questions (
-  id uuid primary key default gen_random_uuid(),
+  id          uuid primary key default gen_random_uuid(),
   workbook_id uuid references workbooks(id) on delete cascade,
-  type text not null check (type in ('multiple', 'short')),
-  text text not null,
-  choices jsonb,         -- 객관식일 때만 사용: [{ id, text }]
-  answer text not null,  -- 객관식: choice id / 단답형: 정답 텍스트
+  type        text not null check (type in ('multiple', 'short')),
+  text        text not null,
+  choices     jsonb,        -- 객관식일 때만 사용: [{ id, text }]
+  answer      text not null, -- 객관식: choice id / 단답형: 정답 텍스트
   order_index int not null
 );
+
+-- 태그 마스터 (N:M 정규화)
+create table tags (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null unique,
+  created_at timestamptz default now()
+);
+
+-- 문제집↔태그 연결 (N:M)
+create table workbook_tags (
+  workbook_id uuid not null references workbooks(id) on delete cascade,
+  tag_id      uuid not null references tags(id)      on delete cascade,
+  primary key (workbook_id, tag_id)
+);
 ```
+
+### 태그 정책
+
+| 항목 | 정책 |
+|------|------|
+| 대소문자 | 구분 (입력 그대로 저장) |
+| 공백 | trim + 내부 연속 공백 → 단일 공백 |
+| 빈 값 | 저장 안 함 |
+| 최대 길이 | 50자 (초과 시 무시) |
+| 중복 | 한 문제집 내 중복 불가 (DB unique + 코드 dedup) |
+| 미사용 태그 | tags 마스터 레코드 유지 (자동완성/통계 활용 가능) |
+| 문제집 삭제 시 | workbook_tags cascade 삭제, tags 마스터는 유지 |
 
 ---
 
