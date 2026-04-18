@@ -42,7 +42,8 @@ src/
 │   │   ├── [id]/
 │   │   │   └── page.tsx                 # 문제집 수정
 │   │   └── _components/
-│   │       └── workbook-form.tsx        # 생성/수정 공유 폼
+│   │       ├── workbook-form.tsx        # 생성/수정 공유 폼
+│   │       └── md-import-modal.tsx      # 마크다운 불러오기 모달
 │   └── api/
 │       ├── harness/
 │       │   └── route.ts                 # 하네스 실행 API
@@ -56,10 +57,14 @@ src/
     ├── supabase.ts                       # Supabase 클라이언트
     ├── types.ts                          # 공유 타입 정의
     ├── grader.ts                         # 채점 순수 함수
-    └── mock.ts                           # 개발용 mock 데이터
+    ├── mock.ts                           # 개발용 mock 데이터
+    └── md-parser.ts                      # 마크다운 → 문제집 구조 변환
 
 tests/
-└── grader.test.ts                        # grader 단위 테스트 (8 cases)
+├── grader.test.ts                        # grader 단위 테스트 (8 cases)
+├── md-parser.test.ts                     # md-parser 단위 테스트 (44 cases)
+└── integration/
+    └── workbooks.test.ts                 # Supabase 통합 테스트 (9 cases, 별도 실행)
 
 docs/
 ├── harness-spec.md                       # 하네스 구조 명세
@@ -206,7 +211,66 @@ create table questions (
 
 ---
 
-## 6. 채점 로직 (`src/lib/grader.ts`)
+## 6. 마크다운 불러오기 (`src/lib/md-parser.ts`)
+
+문제집을 마크다운 형식으로 일괄 입력할 수 있는 파서. 미래 AI validation 확장을 고려한 4단계 파이프라인 구조.
+
+### 파이프라인
+
+```
+parseMarkdown()  →  ruleBasedValidate()  →  [future: aiValidate()]  →  save
+```
+
+### 마크다운 형식
+
+```markdown
+# 문제집 제목
+태그: JavaScript, 프로그래밍
+
+## 1번 문제
+문제 내용
+
+A. 선택지 A
+B. 선택지 B
+C. 선택지 C
+D. 선택지 D
+
+정답: C
+해설: 해설 내용 (미리보기 전용, DB 저장 안 됨)
+
+## 2번 문제
+단답형 문제
+
+정답: 정답 텍스트
+```
+
+### 정답 표기 정규화
+
+| 입력 | 정규화 결과 |
+|------|------------|
+| `A` / `a` / `①` / `1` / `(1)` / `1번` | `"a"` |
+| `B` / `b` / `②` / `2` / `(2)` / `2번` | `"b"` |
+| `C` / `c` / `③` / `3` | `"c"` |
+| `D` / `d` / `④` / `4` | `"d"` |
+| 그 외 텍스트 | 단답형 그대로 유지 |
+
+### 부분 성공 원칙
+
+| 구분 | 설명 | 동작 |
+|------|------|------|
+| `blockError` | 저장 불가 오류 | 빈 입력 / `##` 헤더 없음 / 모든 문제 본문 공백 |
+| `warning` | 주의 필요, 저장 가능 | 제목 없음 / 정답 없음 / 선택지 부족 / 해설 있음 / 중복 본문 |
+
+변환 실패 필드는 `""` 처리 — 전체를 폐기하지 않음.
+
+### AI validation 대비
+
+`extractValidationTargets(result)`: warning이 있는 필드만 추출 (explanation 제외).  
+AI는 전체 마크다운이 아닌 이 목록만 검토하여 토큰 절약.
+
+---
+
+## 7. 채점 로직 (`src/lib/grader.ts`)
 
 순수 함수로 분리되어 API와 테스트에서 공통 사용.
 
@@ -220,7 +284,46 @@ create table questions (
 
 ---
 
-## 7. 데이터 흐름
+## 8. 테스트
+
+### 단위 테스트 (`npm test`)
+
+| 파일 | 케이스 수 | 주요 검증 |
+|------|-----------|-----------|
+| `tests/grader.test.ts` | 8 | 전체 정답/오답, 대소문자, 공백, 빈 배열, score 반올림 |
+| `tests/md-parser.test.ts` | 44 | 정상 파싱, 각 필드 누락, 정답 정규화 13종, 경계 케이스 |
+
+### 통합 테스트 (`npm run test:integration`)
+
+`tests/integration/workbooks.test.ts` — 9 케이스, 실제 Supabase DB 연결 필요.  
+`SUPABASE_SERVICE_ROLE_KEY` 환경 변수 설정 후 실행.
+
+| 케이스 | 내용 |
+|--------|------|
+| workbooks | 생성 / 조회 / 수정 / 삭제 / 제목 검색 / 태그 필터 |
+| questions | 생성+조회 / cascade 삭제 / order_index 정렬 |
+
+> 기본 `npm test`에서는 제외됨 (`testPathIgnorePatterns`).
+
+---
+
+## 9. 데이터 흐름
+
+### 마크다운 불러오기
+
+```
+사용자 → 마크다운 텍스트 입력
+  ↓
+parseMarkdown()     — ## 헤더로 분할, 선택지/정답/해설 파싱
+  ↓
+ruleBasedValidate() — blockError / warning 분류
+  ↓
+미리보기 표시       — 문제별 경고, 저장 가능 여부
+  ↓
+onApply()           — WorkbookForm 상태에 {title, tags, questions} 주입
+```
+
+### 문제 풀이 → 결과
 
 ### 문제 풀이 → 결과
 
@@ -251,7 +354,7 @@ sessionStorage.setItem(`result-${id}`, JSON.stringify(summary))
 
 ---
 
-## 8. 환경 변수
+## 10. 환경 변수
 
 `.env.local`에 설정. Git에 포함되지 않음.
 
@@ -264,7 +367,7 @@ sessionStorage.setItem(`result-${id}`, JSON.stringify(summary))
 
 ---
 
-## 9. 하네스 엔지니어링
+## 11. 하네스 엔지니어링
 
 모든 변경 후 `npx tsx scripts/harness/executor.ts` 실행 필수.
 
@@ -281,7 +384,7 @@ sessionStorage.setItem(`result-${id}`, JSON.stringify(summary))
 
 ---
 
-## 10. 개발 순서 이력
+## 12. 개발 순서 이력
 
 | 단계 | 내용 | 커밋 |
 |------|------|------|
@@ -291,10 +394,13 @@ sessionStorage.setItem(`result-${id}`, JSON.stringify(summary))
 | 4 | 페이지 → API 연결 | `4d6c597` |
 | 5 | 문제집 관리 CRUD | `fc9e99c` |
 | + | grader 단위 테스트 (8 cases) | `20fadd4` |
+| + | RLS 수정 + Supabase 통합 테스트 (9 cases) | `3df6482` |
+| + | 마크다운 불러오기 (md-parser + modal) | `ae4d844` |
+| + | md-parser 단위 테스트 (44 cases) | `ca7be4e` |
 
 ---
 
-## 11. 다음 단계 (미구현)
+## 13. 다음 단계 (미구현)
 
 - 로그인 / 인증 (Supabase Auth)
 - 문제집 소유자 기반 권한 분리
