@@ -4,13 +4,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { WorkbookListItem } from "@/lib/types";
 
-const ALL_TAGS = ["JavaScript", "프로그래밍", "HTML", "CSS", "웹"];
-
 export default function WorkbooksPage() {
   const [query, setQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   // null = 최초 로딩 중, [] 이상 = 응답 완료
   const [workbooks, setWorkbooks] = useState<WorkbookListItem[] | null>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/tags")
+      .then((r) => r.json())
+      .then((data) => setAllTags(Array.isArray(data) ? data : []));
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -47,7 +52,7 @@ export default function WorkbooksPage() {
         >
           전체
         </button>
-        {ALL_TAGS.map((tag) => (
+        {allTags.map((tag) => (
           <button
             key={tag}
             onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
