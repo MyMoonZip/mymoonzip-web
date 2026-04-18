@@ -224,3 +224,33 @@
 **실패 여부:** 없음 (최초 실행 ALL PASS)
 
 **다음 액션:** md-parser 단위 테스트 추가 권장.
+
+---
+
+## 2026-04-18 — md-parser 단위 테스트 추가
+
+**작업 목표:** md-parser.ts 전체 케이스 커버 — 44개 단위 테스트
+
+**신규/수정 파일:**
+- tests/md-parser.test.ts (신규 — 44개 케이스)
+
+**테스트 케이스:**
+- 정상 케이스 (객관식/단답형/전체 필드)
+- 제목 누락 / 문제 본문 누락 / 정답 누락 / 선택지 부족 / 선택지 중복
+- 정답 정규화 (A/a/①/1/(1)/1번 등 13가지 형식)
+- 정답-선택지 불일치 / 해설 경고 / 중복 본문 감지
+- 빈 입력 / ## 헤더 없음 / 완전히 잘못된 입력 / 이모지 포함
+- ruleBasedValidate / extractValidationTargets / toDraftQuestions
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 |
+| 2 | FAIL → PASS | `warningFields` 미사용 함수 → 제거 후 통과 |
+| 3 | PASS | 44 tests passed (unit 8 + md-parser 44 = 52 total) |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** SHELL 2 — @typescript-eslint/no-unused-vars (warningFields 함수 정의만 하고 미사용) → 제거 후 통과
+
+**다음 액션:** `SUPABASE_SERVICE_ROLE_KEY` 설정 후 `npm run test:integration` 실행 확인.
