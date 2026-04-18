@@ -12,6 +12,9 @@ export interface Question {
   order_index: number;
 }
 
+/** 폼 편집용 — id/order_index 없이 _key로 식별 */
+export type DraftQuestion = Omit<Question, "id" | "order_index"> & { _key: string };
+
 export interface WorkbookListItem {
   id: string;
   title: string;

@@ -2,9 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { WorkbookDetail, Question, Choice } from "@/lib/types";
-
-type DraftQuestion = Omit<Question, "id" | "order_index"> & { _key: string };
+import type { WorkbookDetail, Choice, DraftQuestion } from "@/lib/types";
+import MdImportModal from "./md-import-modal";
 
 interface Props {
   initial?: WorkbookDetail;
@@ -49,6 +48,7 @@ export default function WorkbookForm({ initial }: Props) {
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMdImport, setShowMdImport] = useState(false);
 
   function updateQuestion(idx: number, patch: Partial<DraftQuestion>) {
     setQuestions((prev) =>
@@ -116,7 +116,28 @@ export default function WorkbookForm({ initial }: Props) {
   }
 
   return (
+    <>
+    {showMdImport && (
+      <MdImportModal
+        onClose={() => setShowMdImport(false)}
+        onApply={({ title: t, tags, questions: qs }) => {
+          setTitle(t);
+          setTagInput(tags.join(", "));
+          setQuestions(qs);
+        }}
+      />
+    )}
     <form onSubmit={handleSubmit} className="space-y-10">
+      {/* 마크다운 불러오기 */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowMdImport(true)}
+          className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 underline underline-offset-2 transition-colors"
+        >
+          마크다운으로 불러오기
+        </button>
+      </div>
       {/* 기본 정보 */}
       <section className="space-y-4">
         <div>
@@ -248,5 +269,6 @@ export default function WorkbookForm({ initial }: Props) {
         {saving ? "저장 중..." : initial ? "수정 완료" : "문제집 만들기"}
       </button>
     </form>
+    </>
   );
 }

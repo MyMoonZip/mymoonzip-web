@@ -183,3 +183,44 @@
 **실패 여부:** 없음
 
 **다음 액션:** `SUPABASE_SERVICE_ROLE_KEY` 설정 후 `npm run test:integration` 실행 확인.
+
+---
+
+## 2026-04-18 — 마크다운 불러오기 기능 추가
+
+**작업 목표:** 마크다운 입력 → 파싱 → 미리보기 → 폼 적용
+
+**신규/수정 파일:**
+- src/lib/types.ts: DraftQuestion 타입 추가 (workbook-form에서 이동)
+- src/lib/md-parser.ts: 파서 + 검증 + AI validation 대비 구조
+- src/app/manage/_components/md-import-modal.tsx: 가이드 + 입력 + 미리보기 모달
+- src/app/manage/_components/workbook-form.tsx: DraftQuestion import 교체, 모달 버튼 추가
+
+**처리한 케이스:**
+- 정상 / 제목 누락 / 문제 본문 누락 / 선택지 일부 누락 / 선택지 중복
+- 정답 누락 / 정답 형식 다양 (A/a/①/1/(1)) / 정답-선택지 불일치
+- 해설 누락 / 해설 있으나 저장 안 됨 (warning)
+- 구분자 없음 / 공백 과다 / 빈 입력 / 완전히 잘못된 입력
+- 중복 문제 본문 감지
+
+**blockError vs warning:**
+- blockError: 빈 입력, ## 헤더 없음, 문제 본문 전무
+- warning: 제목 없음, 정답 없음/불일치, 선택지 부족, 해설(저장 안 됨), 중복
+
+**미래 AI validation 대비:**
+- `parseMarkdown` → `ruleBasedValidate` → *(AI 슬롯)* → `save` 4단계 분리
+- `extractValidationTargets()`: warning 필드만 추출, explanation 제외
+- preview 데이터 재사용 (폼 적용 전까지 ParseResult 유지)
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 |
+| 2 | PASS | 타입/린트 오류 없음 |
+| 3 | PASS | 8 unit tests passed |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** 없음 (최초 실행 ALL PASS)
+
+**다음 액션:** md-parser 단위 테스트 추가 권장.
