@@ -149,3 +149,37 @@
 **실패 여부:** jest.config.ts → ts-node 오류 → jest.config.js로 교체 후 통과
 
 **다음 액션:** MVP 완성. Supabase 테이블 생성 후 실제 동작 확인.
+
+---
+
+## 2026-04-18 — RLS 수정 + DB 통합 테스트 추가
+
+**작업 목표:** RLS 정책 오류 해결 및 실제 DB 연결 통합 테스트 구축
+
+**수정/신규 파일:**
+- src/lib/supabase.ts: anon 클라이언트 / service role 클라이언트(supabaseAdmin) 분리
+- src/app/api/workbooks/route.ts: supabaseAdmin 적용
+- src/app/api/workbooks/[id]/route.ts: supabaseAdmin 적용
+- src/app/api/workbooks/[id]/submit/route.ts: supabaseAdmin 적용
+- src/app/workbooks/[id]/page.tsx: supabaseAdmin 적용
+- src/app/manage/[id]/page.tsx: supabaseAdmin 적용
+- jest.config.js: integration 테스트 기본 실행에서 제외
+- package.json: test:integration 스크립트 추가
+- tests/integration/workbooks.test.ts: 9개 케이스
+
+**통합 테스트 케이스:**
+- workbooks: 생성 / 조회 / 수정 / 삭제 / 제목검색 / 태그필터
+- questions: 생성+조회 / cascade 삭제 / order_index 정렬
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 |
+| 2 | PASS | 타입/린트 오류 없음 |
+| 3 | PASS | unit 8 passed (integration은 별도 명령) |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** 없음
+
+**다음 액션:** `SUPABASE_SERVICE_ROLE_KEY` 설정 후 `npm run test:integration` 실행 확인.

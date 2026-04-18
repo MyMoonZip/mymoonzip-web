@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import type { WorkbookDetail } from "@/lib/types";
 import QuizClient from "./quiz-client";
 

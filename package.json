@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest --passWithNoTests",
+    "test:integration": "jest --testPathPattern=tests/integration --runInBand"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
