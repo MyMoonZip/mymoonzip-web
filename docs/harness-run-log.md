@@ -96,3 +96,28 @@
 **실패 여부:** SHELL 2 — react-hooks/set-state-in-effect 위반 1건 (수정 완료)
 
 **다음 액션:** 5단계 문제집 관리(/manage) 구현.
+
+---
+
+## 2026-04-18 — 5단계: 문제집 관리(/manage) 구현
+
+**작업 목표:** 문제집 생성/수정/삭제 UI
+
+**신규 파일:**
+- src/app/manage/page.tsx (목록 + 삭제)
+- src/app/manage/_components/workbook-form.tsx (생성/수정 공유 폼)
+- src/app/manage/new/page.tsx
+- src/app/manage/[id]/page.tsx
+
+**SHELL 결과:**
+| SHELL | 결과 | 비고 |
+|-------|------|------|
+| 1 | PASS | 구조 정상 |
+| 2 | PASS | 타입/린트 오류 없음 |
+| 3 | PASS | passWithNoTests |
+| 4 | PASS | 허용 경로 위반 없음 |
+| 5 | PASS | ALL PASS |
+
+**실패 여부:** 없음 (최초 실행 ALL PASS)
+
+**다음 액션:** grader.ts 단위 테스트 추가 (SHELL 3 실질 검증).
