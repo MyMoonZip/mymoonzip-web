@@ -2,16 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Workbook } from "@/lib/mock";
+import type { WorkbookDetail } from "@/lib/types";
+import type { GradeSummary } from "@/lib/grader";
 
 interface Props {
-  workbook: Workbook;
+  workbook: WorkbookDetail;
 }
 
 export default function QuizClient({ workbook }: Props) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const question = workbook.questions[index];
   const total = workbook.questions.length;
@@ -21,21 +23,35 @@ export default function QuizClient({ workbook }: Props) {
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
   }
 
-  function handleNext() {
-    if (isLast) {
-      // 결과 페이지로 — answers를 쿼리스트링으로 전달
-      const params = new URLSearchParams();
-      workbook.questions.forEach((q) => {
-        params.set(q.id, answers[q.id] ?? "");
-      });
-      router.push(`/workbooks/${workbook.id}/result?${params.toString()}`);
-    } else {
+  async function handleNext() {
+    if (!isLast) {
       setIndex((i) => i + 1);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/workbooks/${workbook.id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: workbook.questions.map((q) => ({
+            questionId: q.id,
+            userAnswer: answers[q.id] ?? "",
+          })),
+        }),
+      });
+
+      const summary: GradeSummary = await res.json();
+      sessionStorage.setItem(`result-${workbook.id}`, JSON.stringify(summary));
+      router.push(`/workbooks/${workbook.id}/result`);
+    } finally {
+      setSubmitting(false);
     }
   }
 
   const currentAnswer = answers[question.id] ?? "";
-  const canProceed = currentAnswer !== "";
+  const canProceed = currentAnswer !== "" && !submitting;
 
   return (
     <div className="space-y-8">
@@ -96,7 +112,7 @@ export default function QuizClient({ workbook }: Props) {
         disabled={!canProceed}
         className="w-full h-12 rounded-full bg-black text-white text-sm font-medium hover:bg-zinc-700 disabled:opacity-30 transition-colors dark:bg-white dark:text-black dark:hover:bg-zinc-200"
       >
-        {isLast ? "제출" : "다음"}
+        {submitting ? "채점 중..." : isLast ? "제출" : "다음"}
       </button>
     </div>
   );

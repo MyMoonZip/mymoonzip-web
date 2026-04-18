@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { MOCK_WORKBOOKS } from "@/lib/mock";
+import { supabase } from "@/lib/supabase";
+import type { WorkbookDetail } from "@/lib/types";
 import QuizClient from "./quiz-client";
 
 interface Props {
@@ -8,9 +9,17 @@ interface Props {
 
 export default async function WorkbookPage({ params }: Props) {
   const { id } = await params;
-  const workbook = MOCK_WORKBOOKS.find((wb) => wb.id === id);
 
-  if (!workbook) notFound();
+  const { data, error } = await supabase
+    .from("workbooks")
+    .select("*, questions(*)")
+    .eq("id", id)
+    .order("order_index", { referencedTable: "questions", ascending: true })
+    .single();
+
+  if (error || !data) notFound();
+
+  const workbook = data as WorkbookDetail;
 
   return (
     <main className="mx-auto w-full max-w-xl px-6 py-12">

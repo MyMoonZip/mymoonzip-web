@@ -1,25 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { MOCK_WORKBOOKS } from "@/lib/mock";
+import { useEffect, useState } from "react";
+import type { WorkbookListItem } from "@/lib/types";
 
-const ALL_TAGS = Array.from(
-  new Set(MOCK_WORKBOOKS.flatMap((wb) => wb.tags))
-);
+const ALL_TAGS = ["JavaScript", "프로그래밍", "HTML", "CSS", "웹"];
 
 export default function WorkbooksPage() {
   const [query, setQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_WORKBOOKS.filter((wb) => {
-    const matchesQuery =
-      query === "" ||
-      wb.title.toLowerCase().includes(query.toLowerCase()) ||
-      wb.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()));
-    const matchesTag = selectedTag === null || wb.tags.includes(selectedTag);
-    return matchesQuery && matchesTag;
-  });
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (selectedTag) params.set("tag", selectedTag);
+
+    setLoading(true);
+    fetch(`/api/workbooks?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => setWorkbooks(Array.isArray(data) ? data : []))
+      .finally(() => setLoading(false));
+  }, [query, selectedTag]);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12">
@@ -62,18 +65,22 @@ export default function WorkbooksPage() {
       </div>
 
       {/* 목록 */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-zinc-400">불러오는 중...</p>
+      ) : workbooks.length === 0 ? (
         <p className="text-sm text-zinc-500">검색 결과가 없습니다.</p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
-          {filtered.map((wb) => (
+          {workbooks.map((wb) => (
             <li key={wb.id}>
               <Link
                 href={`/workbooks/${wb.id}`}
                 className="block rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
               >
                 <h2 className="font-medium mb-2">{wb.title}</h2>
-                <p className="text-xs text-zinc-500 mb-3">문제 {wb.questionCount}개</p>
+                <p className="text-xs text-zinc-500 mb-3">
+                  문제 {wb.questions?.length ?? 0}개
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {wb.tags.map((tag) => (
                     <span

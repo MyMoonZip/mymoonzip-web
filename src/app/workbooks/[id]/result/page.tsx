@@ -1,46 +1,44 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { MOCK_WORKBOOKS } from "@/lib/mock";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { GradeSummary } from "@/lib/grader";
 
-interface Props {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string>>;
-}
+export default function ResultPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [summary, setSummary] = useState<GradeSummary | null>(null);
 
-export default async function ResultPage({ params, searchParams }: Props) {
-  const { id } = await params;
-  const userAnswers = await searchParams;
+  useEffect(() => {
+    const raw = sessionStorage.getItem(`result-${id}`);
+    if (!raw) {
+      router.replace(`/workbooks/${id}`);
+      return;
+    }
+    setSummary(JSON.parse(raw));
+  }, [id, router]);
 
-  const workbook = MOCK_WORKBOOKS.find((wb) => wb.id === id);
-  if (!workbook) notFound();
-
-  const results = workbook.questions.map((q) => {
-    const userAnswer = (userAnswers[q.id] ?? "").trim().toLowerCase();
-    const correct = q.answer.trim().toLowerCase();
-    return {
-      ...q,
-      userAnswer,
-      isCorrect: userAnswer === correct,
-    };
-  });
-
-  const correctCount = results.filter((r) => r.isCorrect).length;
-  const total = results.length;
-  const score = Math.round((correctCount / total) * 100);
+  if (!summary) return null;
 
   return (
     <main className="mx-auto w-full max-w-xl px-6 py-12 space-y-10">
       {/* 요약 */}
       <div className="text-center space-y-2">
-        <p className="text-5xl font-bold">{score}<span className="text-2xl font-normal text-zinc-400">점</span></p>
-        <p className="text-sm text-zinc-500">{total}문항 중 {correctCount}개 정답</p>
+        <p className="text-5xl font-bold">
+          {summary.score}
+          <span className="text-2xl font-normal text-zinc-400">점</span>
+        </p>
+        <p className="text-sm text-zinc-500">
+          {summary.total}문항 중 {summary.correctCount}개 정답
+        </p>
       </div>
 
       {/* 문항별 결과 */}
       <ul className="space-y-4">
-        {results.map((r, i) => (
+        {summary.results.map((r, i) => (
           <li
-            key={r.id}
+            key={r.questionId}
             className={`rounded-xl border p-4 space-y-2 ${
               r.isCorrect
                 ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
@@ -50,14 +48,17 @@ export default async function ResultPage({ params, searchParams }: Props) {
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium leading-relaxed">
                 <span className="text-xs text-zinc-500 mr-2">Q{i + 1}</span>
-                {r.text}
               </p>
               <span className="shrink-0 text-lg">{r.isCorrect ? "O" : "X"}</span>
             </div>
             {!r.isCorrect && (
               <div className="text-xs space-y-0.5">
-                <p className="text-red-600 dark:text-red-400">내 답: {r.userAnswer || "(미응답)"}</p>
-                <p className="text-green-700 dark:text-green-400">정답: {r.answer}</p>
+                <p className="text-red-600 dark:text-red-400">
+                  내 답: {r.userAnswer || "(미응답)"}
+                </p>
+                <p className="text-green-700 dark:text-green-400">
+                  정답: {r.answer}
+                </p>
               </div>
             )}
           </li>
