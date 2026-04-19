@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { WorkbookDetail } from "@/lib/types";
 import type { GradeSummary } from "@/lib/grader";
+import MarkdownBody from "@/components/markdown-body";
 
 interface Props {
   workbook: WorkbookDetail;
@@ -72,7 +73,7 @@ export default function QuizClient({ workbook }: Props) {
       {/* 문제 */}
       <div>
         <p className="text-xs text-zinc-500 mb-2">Q{index + 1}</p>
-        <p className="text-base font-medium leading-relaxed">{question.text}</p>
+        <MarkdownBody>{question.text}</MarkdownBody>
       </div>
 
       {/* 답안 입력 */}

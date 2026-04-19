@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import MarkdownBody from "@/components/markdown-body";
 import {
   parseMarkdown,
   ruleBasedValidate,
@@ -119,7 +120,7 @@ function PreviewQuestion({ q, num }: { q: ParsedQuestion; num: number }) {
       </div>
 
       {q.text ? (
-        <p className="text-sm leading-relaxed">{q.text}</p>
+        <MarkdownBody className="text-sm">{q.text}</MarkdownBody>
       ) : (
         <p className="text-sm text-zinc-400 italic">(본문 없음)</p>
       )}
